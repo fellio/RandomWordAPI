@@ -1,48 +1,147 @@
 <!doctype html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Word API</title>
 <style>
-  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; line-height: 1.6; color: #111; }
-  code, pre { background: #f4f4f5; border-radius: 6px; }
+  :root {
+    color-scheme: light dark;
+    --bg: #fff;
+    --fg: #111;
+    --muted: #52525b;
+    --code-bg: #f4f4f5;
+    --border: #e4e4e7;
+    --link: #2563eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b0b0c;
+      --fg: #f4f4f5;
+      --muted: #a1a1aa;
+      --code-bg: #1c1c1f;
+      --border: #27272a;
+      --link: #60a5fa;
+    }
+  }
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; line-height: 1.6; background: var(--bg); color: var(--fg); }
+  code, pre { background: var(--code-bg); border-radius: 6px; }
   code { padding: 2px 6px; }
   pre { padding: 12px; overflow: auto; }
-  #word { font-size: 2rem; font-weight: 700; min-height: 3rem; }
+  #word { font-size: 2rem; font-weight: 700; min-height: 3rem; word-break: break-word; }
   button { font-size: 1rem; padding: 8px 16px; cursor: pointer; }
   table { border-collapse: collapse; width: 100%; }
-  td, th { border-bottom: 1px solid #e4e4e7; padding: 8px; text-align: left; vertical-align: top; }
+  .table-wrap { overflow-x: auto; }
+  td, th { border-bottom: 1px solid var(--border); padding: 8px; text-align: left; vertical-align: top; }
+  .topbar { display: flex; align-items: baseline; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+  .topbar h1 { margin: 0; font-size: clamp(1.5rem, 6vw, 2rem); white-space: nowrap; }
+  .lang { font-size: 0.9rem; white-space: nowrap; }
+  .lang a { color: var(--link); text-decoration: none; }
+  .lang a[aria-current="true"] { color: var(--fg); font-weight: 600; text-decoration: none; }
+  .lang .sep { color: var(--muted); margin: 0 6px; }
 </style>
 </head>
 <body>
-<h1>Word API</h1>
-<p>634,367 語の単語リストからランダムなワードを返す API です。</p>
+<div class="topbar">
+  <h1>Word API</h1>
+  <nav class="lang" aria-label="Language">
+    <a href="#" data-lang="en">English</a><span class="sep">|</span><a href="#" data-lang="ja">日本語</a>
+  </nav>
+</div>
+<p data-i18n="intro"></p>
 
 <div id="word">...</div>
-<button id="btn">ランダム取得</button>
+<button id="btn" data-i18n="button"></button>
 <pre id="out"></pre>
 
-<h2>Endpoints</h2>
+<h2 data-i18n="endpoints"></h2>
+<div class="table-wrap">
 <table>
-  <tr><th>Method &amp; Path</th><th>説明</th></tr>
-  <tr><td><code>GET/POST /word</code></td><td>ランダムな単語を1つ返す。<code>?count=N</code> (1-100) で複数取得。POSTはJSONボディ可</td></tr>
-  <tr><td><code>GET/POST /all</code></td><td>全単語をページネーション表示。<code>?limit=100&amp;offset=0</code> (limit 最大1000)</td></tr>
-  <tr><td><code>GET/POST /search?q=app</code></td><td>検索。<code>mode=prefix|contains|suffix</code>、<code>limit</code> 指定可</td></tr>
-  <tr><td><code>GET/POST /words/:word</code></td><td>単語がリストに存在するか確認</td></tr>
-  <tr><td><code>GET /words.txt</code></td><td>生データ (1行1語)</td></tr>
+  <tr><th data-i18n="thMethod"></th><th data-i18n="thDesc"></th></tr>
+  <tr><td><code>GET/POST /word</code></td><td data-i18n="epWord"></td></tr>
+  <tr><td><code>GET/POST /all</code></td><td data-i18n="epAll"></td></tr>
+  <tr><td><code>GET/POST /search?q=app</code></td><td data-i18n="epSearch"></td></tr>
+  <tr><td><code>GET/POST /words/:word</code></td><td data-i18n="epWords"></td></tr>
+  <tr><td><code>GET /words.txt</code></td><td data-i18n="epRaw"></td></tr>
 </table>
+</div>
 
 <script>
-const wordEl = document.getElementById('word');
-const outEl = document.getElementById('out');
+const I18N = {
+  en: {
+    title: "Word API",
+    intro: "A tiny REST API that returns random words from a 634,367-word English list.",
+    button: "Random word",
+    endpoints: "Endpoints",
+    thMethod: "Method &amp; Path",
+    thDesc: "Description",
+    epWord: "Returns one random word. Use <code>?count=N</code> (1-100) for several. POST accepts a JSON body.",
+    epAll: "Paginates the full list with <code>?limit=100&amp;offset=0</code> (limit up to 1000).",
+    epSearch: "Searches words with <code>mode=prefix|contains|suffix</code> and optional <code>limit</code>.",
+    epWords: "Checks whether a word exists in the list.",
+    epRaw: "Raw data, one word per line."
+  },
+  ja: {
+    title: "Word API",
+    intro: "634,367 語の単語リストからランダムなワードを返す API です。",
+    button: "ランダム取得",
+    endpoints: "エンドポイント",
+    thMethod: "メソッド &amp; パス",
+    thDesc: "説明",
+    epWord: "ランダムな単語を1つ返します。<code>?count=N</code> (1-100) で複数取得。POST は JSON ボディ可。",
+    epAll: "全単語をページネーション表示します。<code>?limit=100&amp;offset=0</code> (limit は最大 1000)。",
+    epSearch: "単語を検索します。<code>mode=prefix|contains|suffix</code>、<code>limit</code> 指定可。",
+    epWords: "単語がリストに存在するか確認します。",
+    epRaw: "生データ (1行1語)。"
+  }
+};
+
+const STORAGE_KEY = "word-api:lang";
+
+function detectLang() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved === "en" || saved === "ja") return saved;
+  return (navigator.language || "en").toLowerCase().startsWith("ja") ? "ja" : "en";
+}
+
+function applyLang(lang) {
+  const dict = I18N[lang] ?? I18N.en;
+  document.documentElement.lang = lang;
+  document.title = dict.title;
+  for (const el of document.querySelectorAll("[data-i18n]")) {
+    const value = dict[el.dataset.i18n];
+    if (value !== undefined) el.innerHTML = value;
+  }
+  for (const link of document.querySelectorAll("[data-lang]")) {
+    link.setAttribute("aria-current", String(link.dataset.lang === lang));
+  }
+}
+
+function setLang(lang) {
+  localStorage.setItem(STORAGE_KEY, lang);
+  applyLang(lang);
+}
+
+for (const link of document.querySelectorAll("[data-lang]")) {
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+    setLang(link.dataset.lang);
+  });
+}
+
+const wordEl = document.getElementById("word");
+const outEl = document.getElementById("out");
+
 async function load() {
-  const res = await fetch('/word');
+  const res = await fetch("/word");
   const data = await res.json();
   wordEl.textContent = data.word;
   outEl.textContent = JSON.stringify(data, null, 2);
 }
-document.getElementById('btn').addEventListener('click', load);
+
+document.getElementById("btn").addEventListener("click", load);
+
+applyLang(detectLang());
 load();
 </script>
 </body>
