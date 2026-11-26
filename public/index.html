@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word API</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 720px; margin: 40px auto; padding: 0 16px; line-height: 1.6; color: #111; }
+  code, pre { background: #f4f4f5; border-radius: 6px; }
+  code { padding: 2px 6px; }
+  pre { padding: 12px; overflow: auto; }
+  #word { font-size: 2rem; font-weight: 700; min-height: 3rem; }
+  button { font-size: 1rem; padding: 8px 16px; cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border-bottom: 1px solid #e4e4e7; padding: 8px; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+<h1>Word API</h1>
+<p>634,367 語の単語リストからランダムなワードを返す API です。</p>
+
+<div id="word">...</div>
+<button id="btn">ランダム取得</button>
+<pre id="out"></pre>
+
+<h2>Endpoints</h2>
+<table>
+  <tr><th>Method &amp; Path</th><th>説明</th></tr>
+  <tr><td><code>GET/POST /word</code></td><td>ランダムな単語を1つ返す。<code>?count=N</code> (1-100) で複数取得。POSTはJSONボディ可</td></tr>
+  <tr><td><code>GET/POST /all</code></td><td>全単語をページネーション表示。<code>?limit=100&amp;offset=0</code> (limit 最大1000)</td></tr>
+  <tr><td><code>GET/POST /search?q=app</code></td><td>検索。<code>mode=prefix|contains|suffix</code>、<code>limit</code> 指定可</td></tr>
+  <tr><td><code>GET/POST /words/:word</code></td><td>単語がリストに存在するか確認</td></tr>
+  <tr><td><code>GET /words.txt</code></td><td>生データ (1行1語)</td></tr>
+</table>
+
+<script>
+const wordEl = document.getElementById('word');
+const outEl = document.getElementById('out');
+async function load() {
+  const res = await fetch('/word');
+  const data = await res.json();
+  wordEl.textContent = data.word;
+  outEl.textContent = JSON.stringify(data, null, 2);
+}
+document.getElementById('btn').addEventListener('click', load);
+load();
+</script>
+</body>
+</html>
