@@ -3,3 +3,6 @@ node_modules/
 .dev.vars*
 dist/
 .DS_Store
+
+# Generated from data/words.txt by `npm run build`
+public/words.txt

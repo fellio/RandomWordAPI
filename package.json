@@ -4,12 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler pages dev public --compatibility-date=2026-11-26",
-    "deploy": "wrangler pages deploy public --project-name=word-api"
+    "build": "mkdir -p public && cp data/words.txt public/words.txt",
+    "dev": "npm run build && wrangler pages dev public --port 8788",
+    "deploy": "npm run build && wrangler pages deploy public --project-name=word-api"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261125.1",
-    "typescript": "^7.0.2",
     "wrangler": "^4.168.0"
   }
 }

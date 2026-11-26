@@ -1,139 +1,159 @@
 # Word API
 
-634,367 語の単語リストからランダムなワードを返す API。Cloudflare Pages (Pages Functions) 上で動作します。
+**English** | [日本語](./README_ja.md)
 
-- 本番 URL: https://word-api.pages.dev
-- データ: `words.txt` / `words.json` / `words.ndjson` / `words_pretty.json`（元データ、`public/words.txt` が API 用コピー）
+A tiny, dependency-free REST API that serves random words from a 634,367-word English list. Runs on [Cloudflare Pages Functions](https://developers.cloudflare.com/pages/functions/) — no database, no KV, no build step.
+
+**[Live demo](https://word-api.pages.dev)** · [MIT License](./LICENSE)
+
+```bash
+curl https://word-api.pages.dev/word
+# {"word":"isothermally"}
+```
+
+## Features
+
+- **634,367 words** served straight from a static text file
+- **GET and POST** — pass parameters in the query string or a JSON body
+- **Zero storage cost** — no KV/D1; the word list is a static asset, cached in memory per isolate
+- **CORS enabled** — callable from any browser origin
+- **Consistent JSON errors** with proper status codes (`400`, `404`, `405`)
 
 ## Endpoints
 
-| Method | Path | 説明 |
+| Method | Path | Description |
 |---|---|---|
-| GET / POST | `/word` | ランダムな単語を1つ返す |
-| GET / POST | `/word?count=N` | ランダムな単語を N 個返す（1〜100） |
-| GET / POST | `/all?limit=100&offset=0` | 全単語をページネーション取得（limit 最大 1000、デフォルト 100） |
-| GET / POST | `/search?q=app` | 単語検索。`mode=prefix\|contains\|suffix`（デフォルト prefix）、`limit`（最大 1000） |
-| GET / POST | `/words/:word` | 指定した単語がリストに存在するか確認 |
-| GET | `/words.txt` | 生データ（1行1語、634,367 行） |
-| GET | `/` | ランディングページ（ブラウザで `/word` を試せます） |
+| GET / POST | `/word` | One random word |
+| GET / POST | `/word?count=N` | N random words (`1`–`100`) |
+| GET / POST | `/all?limit=100&offset=0` | Paginated list of all words (`limit` ≤ 1000, default 100) |
+| GET / POST | `/search?q=app` | Search words (`mode=prefix\|contains\|suffix`, `limit` ≤ 1000) |
+| GET / POST | `/words/:word` | Check whether a word exists |
+| GET | `/words.txt` | Raw data, one word per line |
+| GET | `/` | Landing page with a live demo |
 
-全レスポンスは JSON（`/words.txt` と `/` を除く）、CORS 対応（`Access-Control-Allow-Origin: *`）。
-GET / POST 以外のメソッドは `405 {"error":"method not allowed"}` を返します。
+Every response is JSON (except `/words.txt` and `/`). Unsupported methods return `405`.
 
-### POST の使い方
-
-POST では JSON ボディでパラメータを渡せます（ボディが優先、無ければクエリパラメータを使用。ボディ無しでも可）:
+### Examples
 
 ```bash
-curl -X POST https://word-api.pages.dev/word -H 'content-type: application/json' -d '{"count":3}'
-curl -X POST https://word-api.pages.dev/search -H 'content-type: application/json' -d '{"q":"ing","mode":"suffix","limit":5}'
-curl -X POST https://word-api.pages.dev/all -H 'content-type: application/json' -d '{"limit":100,"offset":200}'
-curl -X POST https://word-api.pages.dev/words/apple -H 'content-type: application/json' -d '{}'
-# /words/:word はボディ {"word":"banana"} でパスより優先して判定も可能
-```
-
-### レスポンス例
-
-```bash
-# ランダムな単語を1つ
+# One random word
 curl https://word-api.pages.dev/word
-# {"word":"isothermally"}
+# {"word":"freighting"}
 
-# ランダムな単語を5つ
+# Five random words
 curl "https://word-api.pages.dev/word?count=5"
 # {"words":["realist","trehalose","bew","cantare","quantometer"],"count":5}
 
-# 全単語（ページネーション）
+# Paginate the whole list
 curl "https://word-api.pages.dev/all?limit=3&offset=0"
 # {"words":["0day","0days","0x"],"count":3,"total":634367,"limit":3,"offset":0}
 
-# 前方一致検索
+# Prefix / substring / suffix search
 curl "https://word-api.pages.dev/search?q=apple&limit=5"
 # {"words":["apple","applebaum","applebee","applebees","appleberry"],"count":5,"query":"apple","mode":"prefix","limit":5}
 
-# 存在確認
+curl "https://word-api.pages.dev/search?q=ing&mode=suffix&limit=3"
+# {"words":["aahing","abalienating","abanding"],"count":3,"query":"ing","mode":"suffix","limit":3}
+
+# Existence check
 curl https://word-api.pages.dev/words/apple
 # {"word":"apple","exists":true,"length":5}
 
-curl https://word-api.pages.dev/words/zzzznotaword
-# {"word":"zzzznotaword","exists":false}  (HTTP 404)
+curl -w " [%{http_code}]\n" https://word-api.pages.dev/words/zzzznotaword
+# {"word":"zzzznotaword","exists":false} [404]
 ```
 
-### エラー
+### POST
 
-不正なパラメータは `400` と `{"error":"..."}` を返します。
+Send the same parameters as a JSON body. Body values take precedence over the query string; an empty body is fine.
 
 ```bash
-curl "https://word-api.pages.dev/word?count=999"
-# {"error":"count must be an integer between 1 and 100"}
+curl -X POST https://word-api.pages.dev/word \
+  -H 'content-type: application/json' -d '{"count":3}'
+# {"words":["notaeums","chelodine","codd"],"count":3}
 
-curl "https://word-api.pages.dev/search"
-# {"error":"query parameter 'q' is required"}
+curl -X POST https://word-api.pages.dev/search \
+  -H 'content-type: application/json' -d '{"q":"ing","mode":"suffix","limit":2}'
 
-curl -X POST https://word-api.pages.dev/word -H 'content-type: application/json' -d 'not-json'
-# {"error":"invalid JSON body"}
-
-curl -X PUT https://word-api.pages.dev/word
-# {"error":"method not allowed"}  (HTTP 405)
+curl -X POST https://word-api.pages.dev/all \
+  -H 'content-type: application/json' -d '{"limit":2,"offset":10}'
 ```
 
-## 仕組み
+### Errors
 
-- `public/words.txt`（約 5.9 MB）を静的アセットとして配信
-- Pages Functions が `env.ASSETS.fetch()` で読み込み、モジュールスコープにキャッシュ（コールドスタート時のみ約 6 MB をパース）
-- ランダム選択は `crypto.getRandomValues()` を使用
-- KV / D1 は使わない（データが静的で読み取り専用のため）
+| Status | Body | Cause |
+|---|---|---|
+| `400` | `{"error":"count must be an integer between 1 and 100"}` | Out-of-range or non-numeric parameter |
+| `400` | `{"error":"query parameter 'q' is required"}` | `/search` without `q` |
+| `400` | `{"error":"invalid JSON body"}` | Malformed POST body |
+| `404` | `{"word":"...","exists":false}` | Word not in the list |
+| `405` | `{"error":"method not allowed"}` | Anything other than GET / POST / OPTIONS |
 
-## 開発
+## How it works
 
-```bash
-npm install
-npm run dev   # wrangler pages dev public --port 8788 相当（デフォルトポートは wrangler 依存）
-```
+- `data/words.txt` (~6 MB, one word per line) is copied to `public/` at build time and served as a static asset.
+- The Functions load it once per isolate via `env.ASSETS.fetch()` and keep the parsed array in module scope, so only cold starts pay the parse cost.
+- Random selection uses `crypto.getRandomValues()` with rejection sampling (no modulo bias).
+- The list is read-only, so no KV, D1, or R2 is involved.
 
-型チェック:
-
-```bash
-npx tsc --noEmit
-```
-
-## デプロイ
-
-`node_modules` を作らず `npx` 経由でデプロイできます（事前に `npx wrangler login` でログインしておくこと）:
-
-```bash
-# 初回のみ: Pages プロジェクト作成
-npx -y wrangler@4.168.0 pages project create word-api --production-branch=main
-
-# デプロイ
-npx -y wrangler@4.168.0 pages deploy public --project-name=word-api
-# または npm install 済みなら:
-npm run deploy
-```
-
-## プロジェクト構成
+## Project structure
 
 ```
 .
+├── data/
+│   └── words.txt              # Source word list (634,367 lines)
 ├── functions/
-│   ├── _lib/words.ts      # 共有: データ読み込み/キャッシュ、JSON応答、CORS、乱数
-│   ├── word.ts            # GET/POST /word
-│   ├── all.ts             # GET/POST /all
-│   ├── search.ts          # GET/POST /search
-│   └── words/[word].ts    # GET/POST /words/:word
+│   ├── _lib/words.ts          # Shared: loading/cache, JSON responses, CORS, RNG
+│   ├── word.ts                # GET/POST /word
+│   ├── all.ts                 # GET/POST /all
+│   ├── search.ts              # GET/POST /search
+│   └── words/[word].ts        # GET/POST /words/:word
 ├── public/
-│   ├── index.html         # ランディングページ
-│   └── words.txt          # 単語データ（API用コピー）
+│   ├── index.html             # Landing page
+│   └── words.txt              # Generated by `npm run build` (git-ignored)
 ├── wrangler.toml
 ├── package.json
 └── tsconfig.json
 ```
 
-## データの更新
+## Development
 
-元データ（`words.json` 等）を差し替えたら、API 用コピーを再生成してください:
+Requires Node.js 18+. `node_modules` is optional — everything can run through `npx`.
 
 ```bash
-cp words.txt public/words.txt   # words.txt 形式（1行1語）の場合
+npm run build     # data/words.txt -> public/words.txt
+npm run dev       # http://localhost:8788
+```
+
+With dependencies installed, `npm install` gives you `wrangler` and TypeScript locally:
+
+```bash
+npm install
+npx tsc --noEmit  # type check
+```
+
+## Deployment
+
+```bash
+# First time only: create the Pages project
+npx -y wrangler@4.168.0 pages project create word-api --production-branch=main
+
+# Deploy
+npm run build
 npx -y wrangler@4.168.0 pages deploy public --project-name=word-api
 ```
+
+Or, with `node_modules` installed, `npm run deploy`.
+
+## Updating the word list
+
+Replace `data/words.txt` (one word per line), then rebuild and deploy:
+
+```bash
+npm run build
+npm run deploy
+```
+
+## License
+
+[MIT](./LICENSE)
