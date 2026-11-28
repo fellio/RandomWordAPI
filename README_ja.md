@@ -2,7 +2,7 @@
 
 [English](./README.md) | **日本語**
 
-634,367 語の英語単語リストからランダムな単語を返す、依存ライブラリ不要の小さな REST API です。[Cloudflare Pages Functions](https://developers.cloudflare.com/pages/functions/) 上で動作し、データベースも KV もビルド手順も不要です。
+649,225 語の英語単語リストからランダムな単語を返す、依存ライブラリ不要の小さな REST API です。[Cloudflare Pages Functions](https://developers.cloudflare.com/pages/functions/) 上で動作し、データベースも KV もバンドラも不要です。
 
 **[デモ](https://word-api.pages.dev)** · [MIT ライセンス](./LICENSE)
 
@@ -13,7 +13,7 @@ curl https://word-api.pages.dev/word
 
 ## 特徴
 
-- **634,367 語**を静的テキストファイルから直接配信
+- **649,225 語**を静的テキストファイルから直接配信
 - **GET と POST** — パラメータはクエリ文字列でも JSON ボディでも指定可能
 - **ストレージコストゼロ** — KV / D1 不使用。単語リストは静的アセットで、アイソレートごとにメモリへキャッシュ
 - **CORS 対応** — 任意のブラウザオリジンから呼び出し可能
@@ -46,7 +46,7 @@ curl "https://word-api.pages.dev/word?count=5"
 
 # 全単語のページネーション
 curl "https://word-api.pages.dev/all?limit=3&offset=0"
-# {"words":["0day","0days","0x"],"count":3,"total":634367,"limit":3,"offset":0}
+# {"words":["0day","0days","0x"],"count":3,"total":649225,"limit":3,"offset":0}
 
 # 前方一致 / 部分一致 / 後方一致検索
 curl "https://word-api.pages.dev/search?q=apple&limit=5"
@@ -101,7 +101,7 @@ curl -X POST https://word-api.pages.dev/all \
 ```
 .
 ├── data/
-│   └── words.txt              # 元データ（634,367 行）
+│   └── words.txt              # 元データ（649,225 行）
 ├── functions/
 │   ├── _lib/words.ts          # 共有: 読み込み/キャッシュ、JSON応答、CORS、乱数
 │   ├── word.ts                # GET/POST /word
@@ -111,6 +111,7 @@ curl -X POST https://word-api.pages.dev/all \
 ├── public/
 │   ├── index.html             # ランディングページ
 │   └── words.txt              # `npm run build` で生成（git 管理外）
+├── NOTICE                     # サードパーティの単語リスト著作権表示
 ├── wrangler.toml
 ├── package.json
 └── tsconfig.json
@@ -118,41 +119,27 @@ curl -X POST https://word-api.pages.dev/all \
 
 ## 開発
 
-Node.js 18 以上が必要です。`node_modules` は任意で、すべて `npx` 経由で実行できます。
+Node.js 18 以上が必要です。
 
 ```bash
+npm install       # Wrangler をインストール
 npm run build     # data/words.txt -> public/words.txt
 npm run dev       # http://localhost:8788
 ```
 
-依存関係をインストールすると、`wrangler` と TypeScript をローカルで使えます:
+`npm run build` は単語リストを `public/` にコピーするだけです。Pages Functions は Wrangler が直接配信するため、バンドル手順はありません。
 
-```bash
-npm install
-npx tsc --noEmit  # 型チェック
-```
+## 単語リスト
 
-## デプロイ
+`data/words.txt` は 1 行 1 語の小文字アルファベット順リストです。辞書ベースの単語リストと現代英語の語彙を重複排除して統合したもので、[SCOWL / GNU Aspell](https://github.com/en-wl/wordlist) を含みます。
 
-```bash
-# 初回のみ: Pages プロジェクト作成
-npx -y wrangler@4.168.0 pages project create word-api --production-branch=main
+`public/words.txt` は `npm run build` で `data/words.txt` から生成され、Git 管理外です。リストを変更する場合は `data/words.txt` を編集して再ビルドし、開発サーバーを再起動してください。
 
-# デプロイ
-npm run build
-npx -y wrangler@4.168.0 pages deploy public --project-name=word-api
-```
+サードパーティの著作権表示は [NOTICE](./NOTICE) を参照してください。
 
-`node_modules` をインストール済みなら `npm run deploy` でも可。
+## コントリビュート
 
-## 単語リストの更新
-
-`data/words.txt`（1行1語）を差し替えてから、ビルドしてデプロイします:
-
-```bash
-npm run build
-npm run deploy
-```
+Issue と Pull Request を歓迎します。単語リストを変更する場合は、Pull Request の前に `npm run build` を実行してください。
 
 ## ライセンス
 
