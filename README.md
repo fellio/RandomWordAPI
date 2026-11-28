@@ -2,7 +2,7 @@
 
 **English** | [日本語](./README_ja.md)
 
-A tiny, dependency-free REST API that serves random words from a 649,225-word English list. Runs on [Cloudflare Pages Functions](https://developers.cloudflare.com/pages/functions/) — no database, no KV, no bundler.
+A tiny, dependency-free REST API that serves random words from a 670,741-word English list. Runs on [Cloudflare Pages Functions](https://developers.cloudflare.com/pages/functions/) — no database, no KV, no bundler.
 
 **[Live demo](https://word-api.pages.dev)** · [MIT License](./LICENSE)
 
@@ -13,7 +13,7 @@ curl https://word-api.pages.dev/word
 
 ## Features
 
-- **649,225 words** served straight from a static text file
+- **670,741 words** served straight from a static text file
 - **GET and POST** — pass parameters in the query string or a JSON body
 - **Zero storage cost** — no KV/D1; the word list is a static asset, cached in memory per isolate
 - **CORS enabled** — callable from any browser origin
@@ -46,7 +46,7 @@ curl "https://word-api.pages.dev/word?count=5"
 
 # Paginate the whole list
 curl "https://word-api.pages.dev/all?limit=3&offset=0"
-# {"words":["0day","0days","0x"],"count":3,"total":649225,"limit":3,"offset":0}
+# {"words":["0day","0days","0x"],"count":3,"total":670741,"limit":3,"offset":0}
 
 # Prefix / substring / suffix search
 curl "https://word-api.pages.dev/search?q=apple&limit=5"
@@ -101,7 +101,7 @@ curl -X POST https://word-api.pages.dev/all \
 ```
 .
 ├── data/
-│   └── words.txt              # Source word list (649,225 lines)
+│   └── words.txt              # Source word list (670,741 lines)
 ├── functions/
 │   ├── _lib/words.ts          # Shared: loading/cache, JSON responses, CORS, RNG
 │   ├── word.ts                # GET/POST /word
@@ -131,7 +131,15 @@ npm run dev       # http://localhost:8788
 
 ## Word list
 
-`data/words.txt` contains one lowercase word per line, sorted alphabetically. It is a de-duplicated merge of dictionary word lists and modern English usage, including [SCOWL / GNU Aspell](https://github.com/en-wl/wordlist).
+`data/words.txt` contains one lowercase word per line, sorted alphabetically. It is a de-duplicated merge of:
+
+- [SCOWL / GNU Aspell](https://github.com/en-wl/wordlist) dictionary entries
+- [WordNet 3.1](https://wordnet.princeton.edu/) lemma data
+- [OPTED](https://www.mso.anu.edu.au/~ralph/OPTED/) headwords from the 1913 Webster's Unabridged Dictionary
+- [Moby Word Lists](https://www.gutenberg.org/ebooks/3201) by Grady Ward
+- Public-domain Project Gutenberg classics, including the King James Bible, Shakespeare, Beowulf, the Canterbury Tales, the Iliad, the Odyssey, the Aeneid, the Divine Comedy, Le Morte d'Arthur, and Paradise Lost
+
+Classic-text words are kept only when they occur at least twice across the corpus, which filters out most OCR noise while preserving archaic vocabulary and proper nouns.
 
 `public/words.txt` is generated from `data/words.txt` by `npm run build` and is not tracked in Git. To change the list, edit `data/words.txt`, rebuild, and restart the dev server.
 

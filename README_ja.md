@@ -2,7 +2,7 @@
 
 [English](./README.md) | **日本語**
 
-649,225 語の英語単語リストからランダムな単語を返す、依存ライブラリ不要の小さな REST API です。[Cloudflare Pages Functions](https://developers.cloudflare.com/pages/functions/) 上で動作し、データベースも KV もバンドラも不要です。
+670,741 語の英語単語リストからランダムな単語を返す、依存ライブラリ不要の小さな REST API です。[Cloudflare Pages Functions](https://developers.cloudflare.com/pages/functions/) 上で動作し、データベースも KV もバンドラも不要です。
 
 **[デモ](https://word-api.pages.dev)** · [MIT ライセンス](./LICENSE)
 
@@ -13,7 +13,7 @@ curl https://word-api.pages.dev/word
 
 ## 特徴
 
-- **649,225 語**を静的テキストファイルから直接配信
+- **670,741 語**を静的テキストファイルから直接配信
 - **GET と POST** — パラメータはクエリ文字列でも JSON ボディでも指定可能
 - **ストレージコストゼロ** — KV / D1 不使用。単語リストは静的アセットで、アイソレートごとにメモリへキャッシュ
 - **CORS 対応** — 任意のブラウザオリジンから呼び出し可能
@@ -46,7 +46,7 @@ curl "https://word-api.pages.dev/word?count=5"
 
 # 全単語のページネーション
 curl "https://word-api.pages.dev/all?limit=3&offset=0"
-# {"words":["0day","0days","0x"],"count":3,"total":649225,"limit":3,"offset":0}
+# {"words":["0day","0days","0x"],"count":3,"total":670741,"limit":3,"offset":0}
 
 # 前方一致 / 部分一致 / 後方一致検索
 curl "https://word-api.pages.dev/search?q=apple&limit=5"
@@ -101,7 +101,7 @@ curl -X POST https://word-api.pages.dev/all \
 ```
 .
 ├── data/
-│   └── words.txt              # 元データ（649,225 行）
+│   └── words.txt              # 元データ（670,741 行）
 ├── functions/
 │   ├── _lib/words.ts          # 共有: 読み込み/キャッシュ、JSON応答、CORS、乱数
 │   ├── word.ts                # GET/POST /word
@@ -131,7 +131,15 @@ npm run dev       # http://localhost:8788
 
 ## 単語リスト
 
-`data/words.txt` は 1 行 1 語の小文字アルファベット順リストです。辞書ベースの単語リストと現代英語の語彙を重複排除して統合したもので、[SCOWL / GNU Aspell](https://github.com/en-wl/wordlist) を含みます。
+`data/words.txt` は 1 行 1 語の小文字アルファベット順リストです。以下のソースを重複排除して統合しています。
+
+- [SCOWL / GNU Aspell](https://github.com/en-wl/wordlist) の辞書語
+- [WordNet 3.1](https://wordnet.princeton.edu/) の見出し語
+- 1913 年版 Webster's Unabridged Dictionary を基にした [OPTED](https://www.mso.anu.edu.au/~ralph/OPTED/) の見出し語
+- Grady Ward による [Moby Word Lists](https://www.gutenberg.org/ebooks/3201)
+- Project Gutenberg のパブリックドメイン古典（King James 聖書、シェイクスピア、ベオウルフ、カンタベリー物語、イリアス、オデュッセイア、アエネーイス、神曲、アーサー王の死、失楽園など）
+
+古典テキスト由来の語は、コーパス全体で 2 回以上出現するものだけを採用し、OCR ノイズを抑えつつ古語や固有名詞を残しています。
 
 `public/words.txt` は `npm run build` で `data/words.txt` から生成され、Git 管理外です。リストを変更する場合は `data/words.txt` を編集して再ビルドし、開発サーバーを再起動してください。
 
